@@ -15,7 +15,8 @@ $ sudo systemctl status jenkins
 $ sudo systemctl enable jenkins
 ```
 ## Sonar Installation
-### Post:9000
+### Port:9000
+### t2.medium
 ### Pre-requisite
 #### 1)Install OpenJDK-11
 ```
@@ -67,7 +68,7 @@ sonar.jdbc.url=jdbc:postgresql://localhost:5432/sonarqube
 ```
 $ sudo nano /opt/sonarqube/bin/linux-x86-64/sonar.sh
 ```
-#### Add following lines/replace & save it
+#### Add following line/replace & save it
 ```
 RUN_AS_USER=sonar
 ```
@@ -102,6 +103,20 @@ $ sudo systemctl enable sonar
 $ sudo systemctl start sonar
 $ sudo systemctl status sonar
 ```
+#### 7)Modify Kernel System Limits
+```
+$ sudo nano /etc/sysctl.conf
+```
+#### Add following lines & save it
+```
+vm.max_map_count=262144
+fs.file-max=65536
+ulimit -n 65536
+ulimit -u 4096
+```
+```
+$ sudo reboot
+```
 OR
 ```
 $ docker run -d -p 9000:9000 sonarqube:lts
@@ -117,49 +132,48 @@ $ sudo apt-get install docker-ce docker-ce-cli containerd.io -y
 ```
 ## Nexus Installation
 ### Port:8081
+### t2.medium
+#### 1)Installation
 ```
-$ sudo apt install openjdk-8-jre-headless
-$ cd /opt
-$ sudo wget https://download.sonatype.com/nexus/3/latest-unix.tar.gz
-$ tar -zxvf latest-unix.tar.gz
-$ sudo mv /opt/nexus-3.30.1-01 /opt/nexus
-$ sudo adduser nexus
-$ sudo visudo
-```
-#### Add following lines/replace & save it
-```
-nexus ALL=(ALL) NOPASSWD: ALL
-```
-```
-$ sudo chown -R nexus:nexus /opt/nexus
-$ sudo chown -R nexus:nexus /opt/sonatype-work
-$ sudo nano /opt/nexus/bin/nexus.rc
+$ apt update && apt upgrade -y
+$ apt-get install openjdk-8-jdk -y
+$ useradd -M -d /opt/nexus -s /bin/bash -r nexus
+$ echo "nexus ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/nexus
+$ mkdir /opt/nexus
+$ wget https://sonatype-download.global.ssl.fastly.net/repository/downloads-prod-group/3/nexus-3.29.2-02-unix.tar.gz
+$ tar xzf nexus-3.29.2-02-unix.tar.gz -C /opt/nexus --strip-components=1
+$ chown -R nexus:nexus /opt/nexus
+$ nano /opt/nexus/bin/nexus.vmoptions
 ```
 #### Add following lines/replace & save it
-```
-run_as_user="nexus"
-```
-```
-$ sudo nano /opt/nexus/bin/nexus.vmoptions
-```
-#### Add following lines/replace & save it [the directory is changed from ../sonatype-work to ./sonatype-work]
 ```
 -Xms1024m
--Xmx1024m
+-Xmx10243m
 -XX:MaxDirectMemorySize=1024m
--XX:LogFile=./sonatype-work/nexus3/log/jvm.log
+-XX:+UnlockDiagnosticVMOptions
+-XX:+LogVMOutput
+-XX:LogFile=../sonatype-work/nexus3/log/jvm.log
 -XX:-OmitStackTraceInFastThrow
 -Djava.net.preferIPv4Stack=true
 -Dkaraf.home=.
 -Dkaraf.base=.
 -Dkaraf.etc=etc/karaf
--Djava.util.logging.config.file=/etc/karaf/java.util.logging.properties
+-Djava.util.logging.config.file=etc/karaf/java.util.logging.properties
 -Dkaraf.data=./sonatype-work/nexus3
 -Dkaraf.log=./sonatype-work/nexus3/log
 -Djava.io.tmpdir=./sonatype-work/nexus3/tmp
+-Dkaraf.startLocalConsole=false
 ```
 ```
-$ sudo nano /etc/systemd/system/nexus.service
+$ nano /opt/nexus/bin/nexus.rc
+```
+#### Add following lines/replace & save it
+```
+run_as_user="nexus"
+```
+#### 2)Create a Systemd Service File for Nexus
+```
+$ nano /etc/systemd/system/nexus.service
 ```
 #### Add following lines/replace & save it
 ```
@@ -170,10 +184,8 @@ After=network.target
 [Service]
 Type=forking
 LimitNOFILE=65536
-
 ExecStart=/opt/nexus/bin/nexus start
 ExecStop=/opt/nexus/bin/nexus stop
-
 User=nexus
 Restart=on-abort
 
@@ -181,8 +193,8 @@ Restart=on-abort
 WantedBy=multi-user.target
 ```
 ```
+$ sudo systemctl daemon-reload
 $ sudo systemctl start nexus
 $ sudo systemctl enable nexus
 $ sudo systemctl status nexus
 ```
-#### Note: It will take time to start
