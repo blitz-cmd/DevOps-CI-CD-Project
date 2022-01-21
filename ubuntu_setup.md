@@ -1,15 +1,16 @@
 # Ubuntu 20.04 LTS Setup
 ## Java Installation
 ```
-$ apt install openjdk-11-jre-headless
+$ apt install openjdk-11-jre-headless -y
 ```
 ## Jenkin Installation
 ### Port:8080
 ```
+$ apt install openjdk-11-jre-headless -y
 $ wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
 $ sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
 $ sudo apt update
-$ sudo apt install jenkins
+$ sudo apt install jenkins -y
 $ sudo systemctl start jenkins
 $ sudo systemctl status jenkins
 $ sudo systemctl enable jenkins
