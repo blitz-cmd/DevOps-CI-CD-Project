@@ -12,8 +12,8 @@ $ sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/so
 $ sudo apt update
 $ sudo apt install jenkins -y
 $ sudo systemctl start jenkins
-$ sudo systemctl status jenkins
 $ sudo systemctl enable jenkins
+$ sudo systemctl status jenkins 
 ```
 ## Sonar Installation
 ### Port:9000
@@ -198,4 +198,68 @@ $ sudo systemctl daemon-reload
 $ sudo systemctl start nexus
 $ sudo systemctl enable nexus
 $ sudo systemctl status nexus
+```
+## Kubernetes Installation
+#### Instance: t2.medium, EC2 & Ubuntu 20.04 LTS
+#### Run commands as normal user (ubuntu)
+#### 1)Turn off swap memory
+```
+$ swapoff -a
+$ sudo reboot
+```
+#### 2)Install Docker
+```
+$ sudo apt update
+$ sudo apt install docker.io -y
+$ sudo systemctl status docker.service
+$ sudo systemctl enable docker.service
+```
+#### 3)Install Kubernetes
+```
+$ sudo apt install apt-transport-https
+$ sudo apt install curl
+$ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+$ sudo apt-add-repository "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+$ sudo apt install kubelet kubeadm kubectl
+$ sudo apt-mark hold kubelet kubeadm kubectl
+```
+```
+sudo sed -i "s/cgroup-driver=systemd/cgroup-driver=cgroupfs/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+```
+#### 4)Command to prevent kubeadm init error
+#### https://stackoverflow.com/questions/52119985/kubeadm-init-shows-kubelet-isnt-running-or-healthy
+```
+sudo nano /etc/docker/daemon.json
+{
+    "exec-opts": ["native.cgroupdriver=systemd"]
+}
+```
+```
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+sudo systemctl restart kubelet
+```
+#### 5)Run this command in K8-Master Node
+```
+$ sudo kubeadm init --pod-network-cidr=192.168.10.0/24
+```
+#### Note: In the above step you will get below command as output. Run this command in K8-Slave Node after Step 6
+```
+Ex: $ kubeadm join 172.31.84.61:6443 --token ek3958.jwy7ulgwt81xzr2i \
+--discovery-token-ca-cert-hash sha256:5c0453b633092c1a9109003e5bdc7985f6f2692830dd3905810061a28626971d
+```
+#### 6)Run this command in K8-Master Node & add network model for K8
+```
+sudo mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+```
+#### 7)Run kubeadm join command from above
+#### 8)Run this command in K8-Master Node to label K8-Slave node
+```
+kubectl label node ip-172-31-92-175 node-role.kubernetes.io/worker=worker
+kubectl get nodes
 ```
