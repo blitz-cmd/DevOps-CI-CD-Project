@@ -224,22 +224,22 @@ $ sudo apt install kubelet kubeadm kubectl
 $ sudo apt-mark hold kubelet kubeadm kubectl
 ```
 ```
-sudo sed -i "s/cgroup-driver=systemd/cgroup-driver=cgroupfs/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
+$ sudo sed -i "s/cgroup-driver=systemd/cgroup-driver=cgroupfs/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+$ sudo systemctl daemon-reload
+$ sudo systemctl restart kubelet
 ```
 #### 4)Command to prevent kubeadm init error
 #### https://stackoverflow.com/questions/52119985/kubeadm-init-shows-kubelet-isnt-running-or-healthy
 ```
-sudo nano /etc/docker/daemon.json
+$ sudo nano /etc/docker/daemon.json
 {
     "exec-opts": ["native.cgroupdriver=systemd"]
 }
 ```
 ```
-sudo systemctl daemon-reload
-sudo systemctl restart docker
-sudo systemctl restart kubelet
+$ sudo systemctl daemon-reload
+$ sudo systemctl restart docker
+$ sudo systemctl restart kubelet
 ```
 #### 5)Run this command in K8-Master Node
 ```
@@ -252,14 +252,14 @@ Ex: $ kubeadm join 172.31.84.61:6443 --token ek3958.jwy7ulgwt81xzr2i \
 ```
 #### 6)Run this command in K8-Master Node & add network model for K8
 ```
-sudo mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
-kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+$ sudo mkdir -p $HOME/.kube
+$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+$ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 ```
 #### 7)Run kubeadm join command from above
 #### 8)Run this command in K8-Master Node to label K8-Slave node
 ```
-kubectl label node ip-172-31-92-175 node-role.kubernetes.io/worker=worker
-kubectl get nodes
+$ kubectl label node ip-172-31-92-175 node-role.kubernetes.io/worker=worker
+$ kubectl get nodes
 ```
