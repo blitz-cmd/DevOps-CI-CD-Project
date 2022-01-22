@@ -263,3 +263,14 @@ $ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl vers
 $ kubectl label node ip-172-31-92-175 node-role.kubernetes.io/worker=worker
 $ kubectl get nodes
 ```
+## Helm Installation
+```
+$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 -o helm.sh
+$ chmod 700 helm.sh
+$ ./helm.sh
+```
+## Datree Installation
+```
+Refer Datree Documentation: https://hub.datree.io/
+$ helm plugin install https://github.com/datreeio/helm-datree
+```
