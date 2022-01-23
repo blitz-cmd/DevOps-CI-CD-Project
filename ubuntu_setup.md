@@ -1,10 +1,11 @@
-# Ubuntu 20.04 LTS Setup
+# Ubuntu 20.04 LTS Setup for EC2
+### Instance: t2.medium
 ## Java Installation
 ```
 $ apt install openjdk-11-jre-headless -y
 ```
 ## Jenkin Installation
-### Port:8080
+### Port: 8080
 ```
 $ apt install openjdk-11-jre-headless -y
 $ wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
@@ -13,17 +14,28 @@ $ sudo apt update
 $ sudo apt install jenkins -y
 $ sudo systemctl start jenkins
 $ sudo systemctl enable jenkins
-$ sudo systemctl status jenkins 
+$ sudo systemctl status jenkins
+$ sudo usermod -a -G docker jenkins
+$ sudo reboot
+```
+## Helm Plugin Installation in Jenkins Server
+```
+$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 -o helm.sh
+$ chmod 700 helm.sh
+$ ./helm.sh
+```
+## Datree Plugin Installation in Jenkins Server
+#### Note: Refer Datree Documentation: https://hub.datree.io/
+```
+$ helm plugin install https://github.com/datreeio/helm-datree
 ```
 ## Sonar Installation
-### Port:9000
-### t2.medium
-### Pre-requisite
-#### 1)Install OpenJDK-11
+### Port: 9000
+#### 1) Install OpenJDK-11
 ```
 $ apt install openjdk-11-jre-headless
 ```
-#### 2)Install & Configure PostgreSQL
+#### 2) Install & Configure PostgreSQL
 ```
 $ sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" >> /etc/apt/sources.list.d/pgdg.list'
 $ wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O - | sudo apt-key add -
@@ -40,27 +52,27 @@ $ GRANT ALL PRIVILEGES ON DATABASE sonarqube to sonar;
 $ \q
 $ exit
 ```
-#### 3)Download & Install SonarQube
+#### 3) Download & Install SonarQube
 ```
 $ sudo apt-get install zip -y
 ```
-#### Sonar version Number:https://www.sonarqube.org/downloads/
+#### 4) Sonar version Number:https://www.sonarqube.org/downloads/
 ```
 $ sudo wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-<VERSION_NUMBER>.zip
 $ sudo unzip sonarqube-<VERSION_NUMBER>.zip
 $ sudo mv sonarqube-<VERSION_NUMBER> /opt/sonarqube
 ```
-#### 4)Add SonarQube Group and User
+#### 5) Add SonarQube Group and User
 ```
 $ sudo groupadd sonar
 $ sudo useradd -d /opt/sonarqube -g sonar sonar
 $ sudo chown sonar:sonar /opt/sonarqube -R
 ```
-#### 5)Configure SonarQube
+#### 6) Configure SonarQube
 ```
 $ sudo nano /opt/sonarqube/conf/sonar.properties
 ```
-#### Add following lines/replace & save it
+#### 7) Add following lines/replace & save it
 ```
 sonar.jdbc.username=sonar
 sonar.jdbc.password=<my_strong_password>
@@ -69,15 +81,15 @@ sonar.jdbc.url=jdbc:postgresql://localhost:5432/sonarqube
 ```
 $ sudo nano /opt/sonarqube/bin/linux-x86-64/sonar.sh
 ```
-#### Add following line/replace & save it
+#### 8) Add following line/replace & save it
 ```
 RUN_AS_USER=sonar
 ```
-#### 6)Setup Systemd service
+#### 9) Setup Systemd service
 ```
 $ sudo nano /etc/systemd/system/sonar.service
 ```
-#### Add following lines & save it
+#### 10) Add following lines & save it
 ```
 [Unit]
 Description=SonarQube service
@@ -104,11 +116,11 @@ $ sudo systemctl enable sonar
 $ sudo systemctl start sonar
 $ sudo systemctl status sonar
 ```
-#### 7)Modify Kernel System Limits
+#### 11) Modify Kernel System Limits
 ```
 $ sudo nano /etc/sysctl.conf
 ```
-#### Add following lines & save it
+#### 12) Add following lines & save it
 ```
 vm.max_map_count=262144
 fs.file-max=65536
@@ -118,7 +130,8 @@ ulimit -u 4096
 ```
 $ sudo reboot
 ```
-OR
+### OR 
+#### Alternative: Sonar Installation using Docker
 ```
 $ docker run -d -p 9000:9000 sonarqube:lts
 ```
@@ -132,9 +145,8 @@ $ sudo apt-get update
 $ sudo apt-get install docker-ce docker-ce-cli containerd.io -y
 ```
 ## Nexus Installation
-### Port:8081
-### t2.medium
-#### 1)Installation
+### Port: 8081
+#### 1) Installation
 ```
 $ apt update && apt upgrade -y
 $ apt-get install openjdk-8-jdk -y
@@ -146,7 +158,7 @@ $ tar xzf nexus-3.29.2-02-unix.tar.gz -C /opt/nexus --strip-components=1
 $ chown -R nexus:nexus /opt/nexus
 $ nano /opt/nexus/bin/nexus.vmoptions
 ```
-#### Add following lines/replace & save it
+#### 2) Add following lines/replace & save it
 ```
 -Xms1024m
 -Xmx10243m
@@ -168,15 +180,15 @@ $ nano /opt/nexus/bin/nexus.vmoptions
 ```
 $ nano /opt/nexus/bin/nexus.rc
 ```
-#### Add following lines/replace & save it
+#### 3) Add following lines/replace & save it
 ```
 run_as_user="nexus"
 ```
-#### 2)Create a Systemd Service File for Nexus
+#### 4) Create a Systemd Service File for Nexus
 ```
 $ nano /etc/systemd/system/nexus.service
 ```
-#### Add following lines/replace & save it
+#### 5) Add following lines/replace & save it
 ```
 [Unit]
 Description=nexus service
@@ -200,21 +212,20 @@ $ sudo systemctl enable nexus
 $ sudo systemctl status nexus
 ```
 ## Kubernetes Installation
-#### Instance: t2.medium, EC2 & Ubuntu 20.04 LTS
-#### Run commands as normal user (ubuntu)
-#### 1)Turn off swap memory
+#### Note: Run commands as normal user (ubuntu)
+#### 1) Turn off swap memory
 ```
 $ swapoff -a
 $ sudo reboot
 ```
-#### 2)Install Docker
+#### 2) Install Docker
 ```
 $ sudo apt update
 $ sudo apt install docker.io -y
 $ sudo systemctl status docker.service
 $ sudo systemctl enable docker.service
 ```
-#### 3)Install Kubernetes
+#### 3) Install Kubernetes
 ```
 $ sudo apt install apt-transport-https
 $ sudo apt install curl
@@ -228,8 +239,8 @@ $ sudo sed -i "s/cgroup-driver=systemd/cgroup-driver=cgroupfs/g" /etc/systemd/sy
 $ sudo systemctl daemon-reload
 $ sudo systemctl restart kubelet
 ```
-#### 4)Command to prevent kubeadm init error
-#### https://stackoverflow.com/questions/52119985/kubeadm-init-shows-kubelet-isnt-running-or-healthy
+#### 4) Command to prevent kubeadm init error
+#### Link: https://stackoverflow.com/questions/52119985/kubeadm-init-shows-kubelet-isnt-running-or-healthy
 ```
 $ sudo nano /etc/docker/daemon.json
 {
@@ -250,27 +261,16 @@ $ sudo kubeadm init --pod-network-cidr=192.168.10.0/24
 Ex: $ kubeadm join 172.31.84.61:6443 --token ek3958.jwy7ulgwt81xzr2i \
 --discovery-token-ca-cert-hash sha256:5c0453b633092c1a9109003e5bdc7985f6f2692830dd3905810061a28626971d
 ```
-#### 6)Run this command in K8-Master Node & add network model for K8
+#### 6) Run this command in K8-Master Node & add network model for K8-Master
 ```
 $ sudo mkdir -p $HOME/.kube
 $ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 $ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 $ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 ```
-#### 7)Run kubeadm join command from above
-#### 8)Run this command in K8-Master Node to label K8-Slave node
+#### 7) Run kubeadm join command from above
+#### 8) Run this command in K8-Master Node to label K8-Slave node
 ```
 $ kubectl label node ip-172-31-92-175 node-role.kubernetes.io/worker=worker
 $ kubectl get nodes
-```
-## Helm Installation
-```
-$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 -o helm.sh
-$ chmod 700 helm.sh
-$ ./helm.sh
-```
-## Datree Installation
-```
-Refer Datree Documentation: https://hub.datree.io/
-$ helm plugin install https://github.com/datreeio/helm-datree
 ```
